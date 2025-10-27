@@ -1,12 +1,12 @@
 
-"""User Clarification and Research Brief Generation.
+"""사용자 명확화 및 Research Brief 생성.
 
-This module implements the scoping phase of the research workflow, where we:
-1. Assess if the user's request needs clarification
-2. Generate a detailed research brief from the conversation
+이 모듈은 research workflow의 scoping 단계를 구현합니다:
+1. 사용자 요청에 명확화가 필요한지 평가
+2. 대화 내용으로부터 상세한 research brief 생성
 
-The workflow uses structured output to make deterministic decisions about
-whether sufficient context exists to proceed with research.
+workflow는 structured output을 사용하여 연구를 진행하기에 충분한
+컨텍스트가 있는지에 대해 결정론적 결정을 내립니다.
 """
 
 from datetime import datetime
@@ -20,38 +20,38 @@ from langgraph.types import Command
 from deep_research_from_scratch.prompts import clarify_with_user_instructions, transform_messages_into_research_topic_prompt
 from deep_research_from_scratch.state_scope import AgentState, ClarifyWithUser, ResearchQuestion, AgentInputState
 
-# ===== UTILITY FUNCTIONS =====
+# ===== 유틸리티 함수 =====
 
 def get_today_str() -> str:
-    """Get current date in a human-readable format."""
+    """현재 날짜를 사람이 읽기 쉬운 형식으로 반환."""
     return datetime.now().strftime("%a %b %-d, %Y")
 
-# ===== CONFIGURATION =====
+# ===== 설정 =====
 
-# Initialize model
+# 모델 초기화
 model = init_chat_model(model="openai:gpt-4.1", temperature=0.0)
 
-# ===== WORKFLOW NODES =====
+# ===== WORKFLOW 노드 =====
 
 def clarify_with_user(state: AgentState) -> Command[Literal["write_research_brief", "__end__"]]:
     """
-    Determine if the user's request contains sufficient information to proceed with research.
+    사용자 요청에 연구를 진행하기 위한 충분한 정보가 있는지 확인.
 
-    Uses structured output to make deterministic decisions and avoid hallucination.
-    Routes to either research brief generation or ends with a clarification question.
+    structured output을 사용하여 결정론적 결정을 내리고 환각을 방지합니다.
+    research brief 생성으로 라우팅하거나 clarification 질문으로 종료합니다.
     """
-    # Set up structured output model
+    # structured output model 설정
     structured_output_model = model.with_structured_output(ClarifyWithUser)
 
-    # Invoke the model with clarification instructions
+    # clarification 지시사항과 함께 모델 호출
     response = structured_output_model.invoke([
         HumanMessage(content=clarify_with_user_instructions.format(
-            messages=get_buffer_string(messages=state["messages"]), 
+            messages=get_buffer_string(messages=state["messages"]),
             date=get_today_str()
         ))
     ])
 
-    # Route based on clarification need
+    # clarification 필요 여부에 따라 라우팅
     if response.need_clarification:
         return Command(
             goto=END, 
@@ -65,15 +65,15 @@ def clarify_with_user(state: AgentState) -> Command[Literal["write_research_brie
 
 def write_research_brief(state: AgentState):
     """
-    Transform the conversation history into a comprehensive research brief.
+    대화 이력을 포괄적인 research brief로 변환.
 
-    Uses structured output to ensure the brief follows the required format
-    and contains all necessary details for effective research.
+    structured output을 사용하여 brief가 필요한 형식을 따르고
+    효과적인 연구를 위한 모든 필수 세부 정보를 포함하도록 보장합니다.
     """
-    # Set up structured output model
+    # structured output model 설정
     structured_output_model = model.with_structured_output(ResearchQuestion)
 
-    # Generate research brief from conversation history
+    # 대화 이력으로부터 research brief 생성
     response = structured_output_model.invoke([
         HumanMessage(content=transform_messages_into_research_topic_prompt.format(
             messages=get_buffer_string(state.get("messages", [])),
@@ -81,24 +81,24 @@ def write_research_brief(state: AgentState):
         ))
     ])
 
-    # Update state with generated research brief and pass it to the supervisor
+    # 생성된 research brief로 state를 업데이트하고 supervisor로 전달
     return {
         "research_brief": response.research_brief,
         "supervisor_messages": [HumanMessage(content=f"{response.research_brief}.")]
     }
 
-# ===== GRAPH CONSTRUCTION =====
+# ===== GRAPH 구성 =====
 
-# Build the scoping workflow
+# scoping workflow 구축
 deep_researcher_builder = StateGraph(AgentState, input_schema=AgentInputState)
 
-# Add workflow nodes
+# workflow 노드 추가
 deep_researcher_builder.add_node("clarify_with_user", clarify_with_user)
 deep_researcher_builder.add_node("write_research_brief", write_research_brief)
 
-# Add workflow edges
+# workflow edge 추가
 deep_researcher_builder.add_edge(START, "clarify_with_user")
 deep_researcher_builder.add_edge("write_research_brief", END)
 
-# Compile the workflow
+# workflow 컴파일
 scope_research = deep_researcher_builder.compile()

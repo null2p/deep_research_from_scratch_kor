@@ -1,8 +1,8 @@
 
-"""Research Utilities and Tools.
+"""연구 유틸리티 및 도구.
 
-This module provides search and content processing utilities for the research agent,
-including web search capabilities and content summarization tools.
+이 모듈은 연구 에이전트를 위한 검색 및 콘텐츠 처리 유틸리티를 제공합니다.
+웹 검색 기능과 콘텐츠 요약 도구를 포함합니다.
 """
 
 from pathlib import Path
@@ -18,51 +18,51 @@ from tavily import TavilyClient
 from deep_research_from_scratch.state_research import Summary
 from deep_research_from_scratch.prompts import summarize_webpage_prompt
 
-# ===== UTILITY FUNCTIONS =====
+# ===== 유틸리티 함수 =====
 
 def get_today_str() -> str:
-    """Get current date in a human-readable format."""
+    """현재 날짜를 사람이 읽기 쉬운 형식으로 반환합니다."""
     return datetime.now().strftime("%a %b %-d, %Y")
 
 def get_current_dir() -> Path:
-    """Get the current directory of the module.
+    """모듈의 현재 디렉토리를 반환합니다.
 
-    This function is compatible with Jupyter notebooks and regular Python scripts.
+    이 함수는 Jupyter notebook과 일반 Python 스크립트 모두에서 호환됩니다.
 
     Returns:
-        Path object representing the current directory
+        현재 디렉토리를 나타내는 Path 객체
     """
     try:
         return Path(__file__).resolve().parent
-    except NameError:  # __file__ is not defined
+    except NameError:  # __file__이 정의되지 않은 경우
         return Path.cwd()
 
-# ===== CONFIGURATION =====
+# ===== 설정 =====
 
 summarization_model = init_chat_model(model="openai:gpt-4.1-mini")
 tavily_client = TavilyClient()
 
-# ===== SEARCH FUNCTIONS =====
+# ===== 검색 함수 =====
 
 def tavily_search_multiple(
-    search_queries: List[str], 
-    max_results: int = 3, 
-    topic: Literal["general", "news", "finance"] = "general", 
-    include_raw_content: bool = True, 
+    search_queries: List[str],
+    max_results: int = 3,
+    topic: Literal["general", "news", "finance"] = "general",
+    include_raw_content: bool = True,
 ) -> List[dict]:
-    """Perform search using Tavily API for multiple queries.
+    """Tavily API를 사용하여 여러 쿼리를 검색합니다.
 
     Args:
-        search_queries: List of search queries to execute
-        max_results: Maximum number of results per query
-        topic: Topic filter for search results
-        include_raw_content: Whether to include raw webpage content
+        search_queries: 실행할 검색 쿼리 리스트
+        max_results: 쿼리당 최대 결과 개수
+        topic: 검색 결과의 주제 필터
+        include_raw_content: 원본 웹페이지 콘텐츠 포함 여부
 
     Returns:
-        List of search result dictionaries
+        검색 결과 딕셔너리 리스트
     """
 
-    # Execute searches sequentially. Note: yon can use AsyncTavilyClient to parallelize this step.
+    # 순차적으로 검색 실행. 참고: AsyncTavilyClient를 사용하여 이 단계를 병렬화할 수 있습니다.
     search_docs = []
     for query in search_queries:
         result = tavily_client.search(
@@ -76,27 +76,27 @@ def tavily_search_multiple(
     return search_docs
 
 def summarize_webpage_content(webpage_content: str) -> str:
-    """Summarize webpage content using the configured summarization model.
+    """설정된 요약 모델을 사용하여 웹페이지 콘텐츠를 요약합니다.
 
     Args:
-        webpage_content: Raw webpage content to summarize
+        webpage_content: 요약할 원본 웹페이지 콘텐츠
 
     Returns:
-        Formatted summary with key excerpts
+        핵심 발췌문이 포함된 형식화된 요약
     """
     try:
-        # Set up structured output model for summarization
+        # 요약을 위한 구조화된 출력 모델 설정
         structured_model = summarization_model.with_structured_output(Summary)
 
-        # Generate summary
+        # 요약 생성
         summary = structured_model.invoke([
             HumanMessage(content=summarize_webpage_prompt.format(
-                webpage_content=webpage_content, 
+                webpage_content=webpage_content,
                 date=get_today_str()
             ))
         ])
 
-        # Format summary with clear structure
+        # 명확한 구조로 요약 형식화
         formatted_summary = (
             f"<summary>\n{summary.summary}\n</summary>\n\n"
             f"<key_excerpts>\n{summary.key_excerpts}\n</key_excerpts>"
@@ -105,17 +105,17 @@ def summarize_webpage_content(webpage_content: str) -> str:
         return formatted_summary
 
     except Exception as e:
-        print(f"Failed to summarize webpage: {str(e)}")
+        print(f"웹페이지 요약 실패: {str(e)}")
         return webpage_content[:1000] + "..." if len(webpage_content) > 1000 else webpage_content
 
 def deduplicate_search_results(search_results: List[dict]) -> dict:
-    """Deduplicate search results by URL to avoid processing duplicate content.
+    """중복 콘텐츠 처리를 방지하기 위해 URL 기준으로 검색 결과를 중복 제거합니다.
 
     Args:
-        search_results: List of search result dictionaries
+        search_results: 검색 결과 딕셔너리 리스트
 
     Returns:
-        Dictionary mapping URLs to unique results
+        URL을 고유한 결과에 매핑하는 딕셔너리
     """
     unique_results = {}
 
@@ -128,22 +128,22 @@ def deduplicate_search_results(search_results: List[dict]) -> dict:
     return unique_results
 
 def process_search_results(unique_results: dict) -> dict:
-    """Process search results by summarizing content where available.
+    """가능한 경우 콘텐츠를 요약하여 검색 결과를 처리합니다.
 
     Args:
-        unique_results: Dictionary of unique search results
+        unique_results: 고유한 검색 결과 딕셔너리
 
     Returns:
-        Dictionary of processed results with summaries
+        요약이 포함된 처리된 결과 딕셔너리
     """
     summarized_results = {}
 
     for url, result in unique_results.items():
-        # Use existing content if no raw content for summarization
+        # 요약할 원본 콘텐츠가 없으면 기존 콘텐츠 사용
         if not result.get("raw_content"):
             content = result['content']
         else:
-            # Summarize raw content for better processing
+            # 더 나은 처리를 위해 원본 콘텐츠 요약
             content = summarize_webpage_content(result['raw_content'])
 
         summarized_results[url] = {
@@ -154,28 +154,28 @@ def process_search_results(unique_results: dict) -> dict:
     return summarized_results
 
 def format_search_output(summarized_results: dict) -> str:
-    """Format search results into a well-structured string output.
+    """검색 결과를 잘 구조화된 문자열 출력으로 형식화합니다.
 
     Args:
-        summarized_results: Dictionary of processed search results
+        summarized_results: 처리된 검색 결과 딕셔너리
 
     Returns:
-        Formatted string of search results with clear source separation
+        명확한 소스 구분이 있는 형식화된 검색 결과 문자열
     """
     if not summarized_results:
-        return "No valid search results found. Please try different search queries or use a different search API."
+        return "유효한 검색 결과를 찾을 수 없습니다. 다른 검색 쿼리를 시도하거나 다른 검색 API를 사용해주세요."
 
-    formatted_output = "Search results: \n\n"
+    formatted_output = "검색 결과: \n\n"
 
     for i, (url, result) in enumerate(summarized_results.items(), 1):
-        formatted_output += f"\n\n--- SOURCE {i}: {result['title']} ---\n"
+        formatted_output += f"\n\n--- 소스 {i}: {result['title']} ---\n"
         formatted_output += f"URL: {url}\n\n"
-        formatted_output += f"SUMMARY:\n{result['content']}\n\n"
+        formatted_output += f"요약:\n{result['content']}\n\n"
         formatted_output += "-" * 80 + "\n"
 
     return formatted_output
 
-# ===== RESEARCH TOOLS =====
+# ===== 연구 도구 =====
 
 @tool(parse_docstring=True)
 def tavily_search(
@@ -183,56 +183,56 @@ def tavily_search(
     max_results: Annotated[int, InjectedToolArg] = 3,
     topic: Annotated[Literal["general", "news", "finance"], InjectedToolArg] = "general",
 ) -> str:
-    """Fetch results from Tavily search API with content summarization.
+    """콘텐츠 요약 기능이 포함된 Tavily 검색 API에서 결과를 가져옵니다.
 
     Args:
-        query: A single search query to execute
-        max_results: Maximum number of results to return
-        topic: Topic to filter results by ('general', 'news', 'finance')
+        query: 실행할 단일 검색 쿼리
+        max_results: 반환할 최대 결과 개수
+        topic: 결과를 필터링할 주제 ('general', 'news', 'finance')
 
     Returns:
-        Formatted string of search results with summaries
+        요약이 포함된 형식화된 검색 결과 문자열
     """
-    # Execute search for single query
+    # 단일 쿼리 검색 실행
     search_results = tavily_search_multiple(
-        [query],  # Convert single query to list for the internal function
+        [query],  # 내부 함수를 위해 단일 쿼리를 리스트로 변환
         max_results=max_results,
         topic=topic,
         include_raw_content=True,
     )
 
-    # Deduplicate results by URL to avoid processing duplicate content
+    # 중복 콘텐츠 처리를 방지하기 위해 URL 기준으로 결과 중복 제거
     unique_results = deduplicate_search_results(search_results)
 
-    # Process results with summarization
+    # 요약과 함께 결과 처리
     summarized_results = process_search_results(unique_results)
 
-    # Format output for consumption
+    # 사용을 위한 출력 형식화
     return format_search_output(summarized_results)
 
 @tool(parse_docstring=True)
 def think_tool(reflection: str) -> str:
-    """Tool for strategic reflection on research progress and decision-making.
+    """연구 진행 상황과 의사 결정에 대한 전략적 성찰을 위한 도구입니다.
 
-    Use this tool after each search to analyze results and plan next steps systematically.
-    This creates a deliberate pause in the research workflow for quality decision-making.
+    각 검색 후 결과를 분석하고 다음 단계를 체계적으로 계획하기 위해 이 도구를 사용하세요.
+    이것은 품질 있는 의사 결정을 위해 연구 워크플로우에서 의도적인 멈춤을 만듭니다.
 
-    When to use:
-    - After receiving search results: What key information did I find?
-    - Before deciding next steps: Do I have enough to answer comprehensively?
-    - When assessing research gaps: What specific information am I still missing?
-    - Before concluding research: Can I provide a complete answer now?
+    사용 시점:
+    - 검색 결과를 받은 후: 어떤 핵심 정보를 찾았는가?
+    - 다음 단계를 결정하기 전: 포괄적으로 답변하기에 충분한가?
+    - 연구 격차를 평가할 때: 아직 놓치고 있는 구체적인 정보는 무엇인가?
+    - 연구를 마무리하기 전: 이제 완전한 답변을 제공할 수 있는가?
 
-    Reflection should address:
-    1. Analysis of current findings - What concrete information have I gathered?
-    2. Gap assessment - What crucial information is still missing?
-    3. Quality evaluation - Do I have sufficient evidence/examples for a good answer?
-    4. Strategic decision - Should I continue searching or provide my answer?
+    성찰에서 다루어야 할 내용:
+    1. 현재 발견사항 분석 - 어떤 구체적인 정보를 수집했는가?
+    2. 격차 평가 - 아직 놓치고 있는 중요한 정보는 무엇인가?
+    3. 품질 평가 - 좋은 답변을 위한 충분한 증거/예시가 있는가?
+    4. 전략적 결정 - 검색을 계속해야 하는가 아니면 답변을 제공해야 하는가?
 
     Args:
-        reflection: Your detailed reflection on research progress, findings, gaps, and next steps
+        reflection: 연구 진행 상황, 발견사항, 격차 및 다음 단계에 대한 자세한 성찰
 
     Returns:
-        Confirmation that reflection was recorded for decision-making
+        의사 결정을 위해 성찰이 기록되었다는 확인 메시지
     """
-    return f"Reflection recorded: {reflection}"
+    return f"성찰이 기록되었습니다: {reflection}"

@@ -1,33 +1,33 @@
-# San Francisco Coffee Shops Research
+# 샌프란시스코 커피숍 리서치
 
-## Top Coffee Shops in San Francisco
+## 샌프란시스코 최고의 커피숍
 
 ### Blue Bottle Coffee
-- **Founded**: 2002 in Oakland, expanded to SF
-- **Specialty**: Single-origin coffee, pour-over methods
-- **Notable**: Known for freshly roasted beans, minimalist aesthetic
-- **Locations**: Multiple SF locations including Ferry Building
+- **설립**: 2002년 오클랜드에서 설립, 샌프란시스코로 확장
+- **특화**: Single-origin 커피, pour-over 방식
+- **특징**: 신선하게 로스팅한 원두, 미니멀리스트 감성으로 유명
+- **위치**: Ferry Building을 포함한 샌프란시스코 내 여러 매장
 
 ### Philz Coffee
-- **Founded**: 2003 in San Francisco
-- **Specialty**: Custom blended coffee, personalized service
-- **Notable**: Founded by Phil Jaber, known for unique blends like "Tesora"
-- **Locations**: Original location in Mission District, now citywide
+- **설립**: 2003년 샌프란시스코
+- **특화**: 맞춤 블렌드 커피, 개인화된 서비스
+- **특징**: Phil Jaber가 설립, "Tesora"와 같은 독특한 블렌드로 유명
+- **위치**: Mission District의 원조 매장, 현재 시내 전역
 
 ### Sightglass Coffee
-- **Founded**: 2009
-- **Specialty**: Third-wave coffee, roasting transparency
-- **Notable**: Large roastery with viewing windows, industrial aesthetic
-- **Location**: SOMA district flagship location
+- **설립**: 2009년
+- **특화**: Third-wave 커피, 로스팅 투명성
+- **특징**: 관람용 창문이 있는 대형 로스터리, 산업적 감성
+- **위치**: SOMA 지구 플래그십 매장
 
 ### Ritual Coffee Roasters
-- **Founded**: 2005
-- **Specialty**: Direct trade relationships, seasonal offerings
-- **Notable**: Pioneer in San Francisco's third-wave coffee movement
-- **Locations**: Multiple locations including Castro and Mission
+- **설립**: 2005년
+- **특화**: Direct trade 관계, 시즌별 제품
+- **특징**: 샌프란시스코 third-wave 커피 운동의 선구자
+- **위치**: Castro와 Mission을 포함한 여러 매장
 
 ### Four Barrel Coffee
-- **Founded**: 2008
-- **Specialty**: Small-batch roasting, community focus
-- **Notable**: Known for Valencia Street location, local institution
-- **Location**: Mission District
+- **설립**: 2008년
+- **특화**: 소량 배치 로스팅, 커뮤니티 중심
+- **특징**: Valencia Street 매장으로 유명, 지역 명소
+- **위치**: Mission District

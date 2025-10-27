@@ -1,13 +1,13 @@
 
-"""Multi-agent supervisor for coordinating research across multiple specialized agents.
+"""여러 전문 agent를 조정하는 multi-agent supervisor.
 
-This module implements a supervisor pattern where:
-1. A supervisor agent coordinates research activities and delegates tasks
-2. Multiple researcher agents work on specific sub-topics independently
-3. Results are aggregated and compressed for final reporting
+이 모듈은 다음과 같은 supervisor 패턴을 구현합니다:
+1. Supervisor agent가 research 활동을 조정하고 작업을 위임
+2. 여러 researcher agent가 특정 하위 주제에 대해 독립적으로 작업
+3. 결과를 집계하고 압축하여 최종 보고서 작성
 
-The supervisor uses parallel research execution to improve efficiency while
-maintaining isolated context windows for each research topic.
+Supervisor는 병렬 research 실행을 사용하여 효율성을 향상시키면서
+각 research 주제에 대해 격리된 context window를 유지합니다.
 """
 
 import asyncio
@@ -35,34 +35,33 @@ from deep_research_from_scratch.state_multi_agent_supervisor import (
 from deep_research_from_scratch.utils import get_today_str, think_tool
 
 def get_notes_from_tool_calls(messages: list[BaseMessage]) -> list[str]:
-    """Extract research notes from ToolMessage objects in supervisor message history.
+    """Supervisor message history의 ToolMessage 객체에서 research note를 추출합니다.
 
-    This function retrieves the compressed research findings that sub-agents
-    return as ToolMessage content. When the supervisor delegates research to
-    sub-agents via ConductResearch tool calls, each sub-agent returns its
-    compressed findings as the content of a ToolMessage. This function
-    extracts all such ToolMessage content to compile the final research notes.
+    이 함수는 sub-agent가 ToolMessage content로 반환하는 압축된 research 결과를 검색합니다.
+    Supervisor가 ConductResearch tool call을 통해 sub-agent에게 research를 위임하면,
+    각 sub-agent는 압축된 결과를 ToolMessage의 content로 반환합니다. 이 함수는
+    모든 ToolMessage content를 추출하여 최종 research note를 컴파일합니다.
 
     Args:
-        messages: List of messages from supervisor's conversation history
+        messages: Supervisor의 대화 기록에서 가져온 message 목록
 
     Returns:
-        List of research note strings extracted from ToolMessage objects
+        ToolMessage 객체에서 추출한 research note 문자열 목록
     """
     return [tool_msg.content for tool_msg in filter_messages(messages, include_types="tool")]
 
-# Ensure async compatibility for Jupyter environments
+# Jupyter 환경에서 async 호환성 보장
 try:
     import nest_asyncio
-    # Only apply if running in Jupyter/IPython environment
+    # Jupyter/IPython 환경에서 실행 중인 경우에만 적용
     try:
         from IPython import get_ipython
         if get_ipython() is not None:
             nest_asyncio.apply()
     except ImportError:
-        pass  # Not in Jupyter, no need for nest_asyncio
+        pass  # Jupyter가 아니면 nest_asyncio 불필요
 except ImportError:
-    pass  # nest_asyncio not available, proceed without it
+    pass  # nest_asyncio를 사용할 수 없으면 없이 진행
 
 
 # ===== CONFIGURATION =====
@@ -71,42 +70,42 @@ supervisor_tools = [ConductResearch, ResearchComplete, think_tool]
 supervisor_model = init_chat_model(model="anthropic:claude-sonnet-4-20250514")
 supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 
-# System constants
-# Maximum number of tool call iterations for individual researcher agents
-# This prevents infinite loops and controls research depth per topic
-max_researcher_iterations = 6 # Calls to think_tool + ConductResearch
+# System 상수
+# 개별 researcher agent의 최대 tool call 반복 횟수
+# 이는 무한 루프를 방지하고 주제당 research 깊이를 제어합니다
+max_researcher_iterations = 6 # think_tool + ConductResearch 호출
 
-# Maximum number of concurrent research agents the supervisor can launch
-# This is passed to the lead_researcher_prompt to limit parallel research tasks
+# Supervisor가 실행할 수 있는 최대 동시 research agent 수
+# 병렬 research 작업을 제한하기 위해 lead_researcher_prompt에 전달됩니다
 max_concurrent_researchers = 3
 
 # ===== SUPERVISOR NODES =====
 
 async def supervisor(state: SupervisorState) -> Command[Literal["supervisor_tools"]]:
-    """Coordinate research activities.
+    """Research 활동을 조정합니다.
 
-    Analyzes the research brief and current progress to decide:
-    - What research topics need investigation
-    - Whether to conduct parallel research
-    - When research is complete
+    Research brief와 현재 진행 상황을 분석하여 다음을 결정합니다:
+    - 어떤 research 주제를 조사해야 하는지
+    - 병렬 research를 수행할지 여부
+    - Research가 완료되었는지 여부
 
     Args:
-        state: Current supervisor state with messages and research progress
+        state: Message와 research 진행 상황이 포함된 현재 supervisor state
 
     Returns:
-        Command to proceed to supervisor_tools node with updated state
+        업데이트된 state와 함께 supervisor_tools 노드로 진행하는 Command
     """
     supervisor_messages = state.get("supervisor_messages", [])
 
-    # Prepare system message with current date and constraints
+    # 현재 날짜와 제약 조건이 포함된 system message 준비
     system_message = lead_researcher_prompt.format(
-        date=get_today_str(), 
+        date=get_today_str(),
         max_concurrent_research_units=max_concurrent_researchers,
         max_researcher_iterations=max_researcher_iterations
     )
     messages = [SystemMessage(content=system_message)] + supervisor_messages
 
-    # Make decision about next research steps
+    # 다음 research 단계에 대한 결정
     response = await supervisor_model_with_tools.ainvoke(messages)
 
     return Command(
@@ -118,35 +117,35 @@ async def supervisor(state: SupervisorState) -> Command[Literal["supervisor_tool
     )
 
 async def supervisor_tools(state: SupervisorState) -> Command[Literal["supervisor", "__end__"]]:
-    """Execute supervisor decisions - either conduct research or end the process.
+    """Supervisor의 결정을 실행합니다 - research를 수행하거나 프로세스를 종료합니다.
 
-    Handles:
-    - Executing think_tool calls for strategic reflection
-    - Launching parallel research agents for different topics
-    - Aggregating research results
-    - Determining when research is complete
+    다음을 처리합니다:
+    - 전략적 성찰을 위한 think_tool 호출 실행
+    - 다양한 주제에 대한 병렬 research agent 실행
+    - Research 결과 집계
+    - Research 완료 시점 결정
 
     Args:
-        state: Current supervisor state with messages and iteration count
+        state: Message와 반복 횟수가 포함된 현재 supervisor state
 
     Returns:
-        Command to continue supervision, end process, or handle errors
+        Supervision을 계속하거나, 프로세스를 종료하거나, 오류를 처리하는 Command
     """
     supervisor_messages = state.get("supervisor_messages", [])
     research_iterations = state.get("research_iterations", 0)
     most_recent_message = supervisor_messages[-1]
 
-    # Initialize variables for single return pattern
+    # 단일 return 패턴을 위한 변수 초기화
     tool_messages = []
     all_raw_notes = []
-    next_step = "supervisor"  # Default next step
+    next_step = "supervisor"  # 기본 다음 단계
     should_end = False
 
-    # Check exit criteria first
+    # 먼저 종료 기준 확인
     exceeded_iterations = research_iterations >= max_researcher_iterations
     no_tool_calls = not most_recent_message.tool_calls
     research_complete = any(
-        tool_call["name"] == "ResearchComplete" 
+        tool_call["name"] == "ResearchComplete"
         for tool_call in most_recent_message.tool_calls
     )
 
@@ -155,20 +154,20 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
         next_step = END
 
     else:
-        # Execute ALL tool calls before deciding next step
+        # 다음 단계를 결정하기 전에 모든 tool call 실행
         try:
-            # Separate think_tool calls from ConductResearch calls
+            # think_tool 호출과 ConductResearch 호출 분리
             think_tool_calls = [
-                tool_call for tool_call in most_recent_message.tool_calls 
+                tool_call for tool_call in most_recent_message.tool_calls
                 if tool_call["name"] == "think_tool"
             ]
 
             conduct_research_calls = [
-                tool_call for tool_call in most_recent_message.tool_calls 
+                tool_call for tool_call in most_recent_message.tool_calls
                 if tool_call["name"] == "ConductResearch"
             ]
 
-            # Handle think_tool calls (synchronous)
+            # think_tool 호출 처리 (동기)
             for tool_call in think_tool_calls:
                 observation = think_tool.invoke(tool_call["args"])
                 tool_messages.append(
@@ -179,26 +178,26 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
                     )
                 )
 
-            # Handle ConductResearch calls (asynchronous)
+            # ConductResearch 호출 처리 (비동기)
             if conduct_research_calls:
-                # Launch parallel research agents
+                # 병렬 research agent 실행
                 coros = [
                     researcher_agent.ainvoke({
                         "researcher_messages": [
                             HumanMessage(content=tool_call["args"]["research_topic"])
                         ],
                         "research_topic": tool_call["args"]["research_topic"]
-                    }) 
+                    })
                     for tool_call in conduct_research_calls
                 ]
 
-                # Wait for all research to complete
+                # 모든 research 완료 대기
                 tool_results = await asyncio.gather(*coros)
 
-                # Format research results as tool messages
-                # Each sub-agent returns compressed research findings in result["compressed_research"]
-                # We write this compressed research as the content of a ToolMessage, which allows
-                # the supervisor to later retrieve these findings via get_notes_from_tool_calls()
+                # Research 결과를 tool message로 포맷
+                # 각 sub-agent는 result["compressed_research"]에 압축된 research 결과를 반환
+                # 이 압축된 research를 ToolMessage의 content로 작성하여,
+                # supervisor가 나중에 get_notes_from_tool_calls()를 통해 이러한 결과를 검색할 수 있도록 함
                 research_tool_messages = [
                     ToolMessage(
                         content=result.get("compressed_research", "Error synthesizing research report"),
@@ -209,9 +208,9 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
 
                 tool_messages.extend(research_tool_messages)
 
-                # Aggregate raw notes from all research
+                # 모든 research의 raw note 집계
                 all_raw_notes = [
-                    "\n".join(result.get("raw_notes", [])) 
+                    "\n".join(result.get("raw_notes", []))
                     for result in tool_results
                 ]
 
@@ -220,7 +219,7 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
             should_end = True
             next_step = END
 
-    # Single return point with appropriate state updates
+    # 적절한 state 업데이트와 함께 단일 return 지점
     if should_end:
         return Command(
             goto=next_step,
@@ -240,7 +239,7 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
 
 # ===== GRAPH CONSTRUCTION =====
 
-# Build supervisor graph
+# Supervisor graph 구축
 supervisor_builder = StateGraph(SupervisorState)
 supervisor_builder.add_node("supervisor", supervisor)
 supervisor_builder.add_node("supervisor_tools", supervisor_tools)

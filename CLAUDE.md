@@ -1,103 +1,103 @@
-# Deep Research From Scratch - Repository Guide
+# Deep Research From Scratch - 저장소 가이드
 
-## Repository Structure
+## 저장소 구조
 
-This repository builds a comprehensive deep research system from scratch using LangGraph, progressing through 5 tutorial notebooks that demonstrate different components and patterns.
+이 저장소는 LangGraph를 사용하여 처음부터 포괄적인 deep research 시스템을 구축합니다. 다양한 구성 요소와 패턴을 보여주는 5개의 튜토리얼 notebook으로 진행됩니다.
 
 ```
 deep_research_from_scratch/
-├── notebooks/              # Interactive tutorial notebooks (MODIFY THESE)
-│   ├── 1_scoping.ipynb     # User clarification and brief generation
-│   ├── 2_research_agent.ipynb       # Research agent with custom tools
-│   ├── 3_research_agent_mcp.ipynb   # Research agent with MCP servers
-│   ├── 4_research_supervisor.ipynb  # Multi-agent supervisor coordination
-│   ├── 5_full_agent.ipynb  # Complete end-to-end system
-│   └── utils.py            # Shared utilities for notebooks
-├── src/deep_research_from_scratch/  # Generated source code (DO NOT MODIFY)
+├── notebooks/              # 대화형 튜토리얼 notebook (이 파일들을 수정하세요)
+│   ├── 1_scoping.ipynb     # 사용자 명확화 및 brief 생성
+│   ├── 2_research_agent.ipynb       # Custom tool을 사용한 research agent
+│   ├── 3_research_agent_mcp.ipynb   # MCP server를 사용한 research agent
+│   ├── 4_research_supervisor.ipynb  # Multi-agent supervisor 조정
+│   ├── 5_full_agent.ipynb  # 완전한 end-to-end 시스템
+│   └── utils.py            # Notebook용 공유 유틸리티
+├── src/deep_research_from_scratch/  # 생성된 소스 코드 (수정하지 마세요)
 │   ├── multi_agent_supervisor.py
 │   ├── prompts.py
 │   ├── research_agent.py
 │   ├── research_agent_mcp.py
 │   ├── state_*.py
 │   └── utils.py
-└── README.md              # Comprehensive documentation
+└── README.md              # 포괄적인 문서
 ```
 
-## 🚨 Important Development Workflow
+## 🚨 중요한 개발 워크플로우
 
-**The notebooks in `notebooks/` are the source of truth and should be the ONLY files modified.**
+**`notebooks/` 디렉토리의 notebook이 유일한 진실의 원천이며 수정해야 할 유일한 파일입니다.**
 
-The source code in `src/deep_research_from_scratch/` is automatically generated from the notebooks using `%%writefile` magic commands. Here's how it works:
+`src/deep_research_from_scratch/`의 소스 코드는 `%%writefile` magic command를 사용하여 notebook에서 자동으로 생성됩니다. 작동 방식은 다음과 같습니다:
 
-### How Code Generation Works
+### 코드 생성 작동 방식
 
-1. **Notebooks contain `%%writefile` cells**: Each notebook uses Jupyter's `%%writefile` magic to write code directly to files in `src/`
-2. **Notebooks are executable tutorials**: They demonstrate concepts interactively while generating the production code
-3. **Source files are generated artifacts**: The `.py` files in `src/` are outputs, not inputs
+1. **Notebook에 `%%writefile` cell 포함**: 각 notebook은 Jupyter의 `%%writefile` magic을 사용하여 `src/`의 파일에 코드를 직접 작성
+2. **Notebook은 실행 가능한 튜토리얼**: 프로덕션 코드를 생성하면서 대화형으로 개념을 시연
+3. **소스 파일은 생성된 산출물**: `src/`의 `.py` 파일은 출력이지 입력이 아님
 
-### Example from notebooks:
+### Notebook 예제:
 ```python
 %%writefile ../src/deep_research_from_scratch/research_agent.py
 
 """
 Research Agent Implementation
 """
-# ... actual implementation code follows
+# ... 실제 구현 코드가 이어짐
 ```
 
-### Development Guidelines
+### 개발 가이드라인
 
-- ✅ **DO**: Edit notebooks in `notebooks/` directory
-- ✅ **DO**: Run notebook cells to regenerate source code
-- ✅ **DO**: Test changes by running the notebooks
-- ❌ **DON'T**: Directly edit files in `src/deep_research_from_scratch/`
-- ❌ **DON'T**: Expect manual changes to `src/` files to persist
+- ✅ **해야 할 것**: `notebooks/` 디렉토리의 notebook 편집
+- ✅ **해야 할 것**: Notebook cell을 실행하여 소스 코드 재생성
+- ✅ **해야 할 것**: Notebook을 실행하여 변경 사항 테스트
+- ❌ **하지 말아야 할 것**: `src/deep_research_from_scratch/`의 파일을 직접 편집
+- ❌ **하지 말아야 할 것**: `src/` 파일의 수동 변경 사항이 유지될 것으로 기대
 
-## System Architecture
+## 시스템 아키텍처
 
-The system implements a three-phase deep research workflow:
+이 시스템은 3단계 deep research 워크플로우를 구현합니다:
 
-1. **Scope** (Notebook 1): Clarify research scope and generate structured briefs
-2. **Research** (Notebooks 2-4): Perform research using various agent patterns
-3. **Write** (Notebook 5): Synthesize findings into comprehensive reports
+1. **Scope** (Notebook 1): Research 범위를 명확히 하고 구조화된 brief 생성
+2. **Research** (Notebook 2-4): 다양한 agent 패턴을 사용하여 research 수행
+3. **Write** (Notebook 5): 연구 결과를 포괄적인 리포트로 종합
 
-### Key Components
+### 주요 구성 요소
 
-- **Scoping Agent**: Clarifies user intent and generates research briefs
-- **Research Agent**: Iterative research with custom tools or MCP servers
-- **Supervisor Agent**: Coordinates multiple research agents for complex topics
-- **Full System**: Integrates all components into end-to-end workflow
+- **Scoping Agent**: 사용자 의도를 명확히 하고 research brief 생성
+- **Research Agent**: Custom tool 또는 MCP server를 사용한 반복적 research
+- **Supervisor Agent**: 복잡한 주제에 대해 여러 research agent를 조정
+- **Full System**: 모든 구성 요소를 end-to-end 워크플로우로 통합
 
-## Quick Start for Development
+## 개발 빠른 시작
 
-1. Make changes to the appropriate notebook in `notebooks/`
-2. Run the modified cells to regenerate source code
-3. Test the changes by running subsequent notebook cells
-4. The generated code in `src/` will automatically reflect your changes
+1. `notebooks/`의 적절한 notebook을 수정
+2. 수정된 cell을 실행하여 소스 코드 재생성
+3. 후속 notebook cell을 실행하여 변경 사항 테스트
+4. `src/`의 생성된 코드가 자동으로 변경 사항을 반영
 
-This approach ensures that the interactive tutorials remain the authoritative source while automatically maintaining the corresponding Python package structure.
+이 접근 방식은 대화형 튜토리얼이 권위 있는 소스로 유지되면서 자동으로 해당 Python 패키지 구조를 유지하도록 보장합니다.
 
-## Code Quality and Formatting
+## 코드 품질 및 포맷팅
 
-### Ruff Formatting Checks
+### Ruff 포맷팅 검사
 
-To maintain consistent code formatting across the generated source files, run ruff periodically:
+생성된 소스 파일 전체에서 일관된 코드 포맷팅을 유지하려면 주기적으로 ruff를 실행하세요:
 
 ```bash
-# Check for formatting issues
+# 포맷팅 문제 확인
 ruff check src/
 
-# Auto-fix formatting issues where possible
+# 가능한 경우 포맷팅 문제 자동 수정
 ruff check src/ --fix
 
-# Check specific file
+# 특정 파일 확인
 ruff check src/deep_research_from_scratch/research_agent.py
 ```
 
-**Important**: Since source files in `src/` are generated from notebooks, any formatting issues should be fixed in the notebook `%%writefile` cells, not directly in the source files. After fixing formatting in notebooks, regenerate the source files by running the notebook cells.
+**중요**: `src/`의 소스 파일은 notebook에서 생성되므로, 모든 포맷팅 문제는 소스 파일에서 직접 수정하는 것이 아니라 notebook의 `%%writefile` cell에서 수정해야 합니다. Notebook에서 포맷팅을 수정한 후 notebook cell을 실행하여 소스 파일을 재생성하세요.
 
-**Common formatting fixes needed:**
-- **D212**: Ensure docstring summaries start on the same line as triple quotes
-- **I001**: Organize imports properly (standard library → third party → local imports)
-- **F401**: Remove unused imports
-- **D415**: Add periods to docstring summaries
+**일반적으로 필요한 포맷팅 수정:**
+- **D212**: Docstring 요약이 삼중 따옴표와 같은 줄에서 시작하도록 보장
+- **I001**: Import를 올바르게 정리 (표준 라이브러리 → 서드파티 → 로컬 import)
+- **F401**: 사용하지 않는 import 제거
+- **D415**: Docstring 요약에 마침표 추가

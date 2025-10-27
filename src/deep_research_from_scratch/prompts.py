@@ -1,7 +1,7 @@
-"""Prompt templates for the deep research system.
+"""Deep research 시스템을 위한 prompt template들.
 
-This module contains all prompt templates used across the research workflow components,
-including user clarification, research brief generation, and report synthesis.
+이 module은 research workflow component들에서 사용되는 모든 prompt template들을 포함합니다.
+사용자 명확화, research brief 생성, report 합성 등이 포함됩니다.
 """
 
 clarify_with_user_instructions="""
@@ -192,7 +192,7 @@ Remember, your goal is to create a summary that can be easily understood and uti
 Today's date is {date}.
 """
 
-# Research agent prompt for MCP (Model Context Protocol) file access
+# MCP (Model Context Protocol) 파일 접근을 위한 research agent prompt
 research_agent_prompt_with_mcp = """You are a research assistant conducting research on the user's input topic using local files. For context, today's date is {date}.
 
 <Task>

@@ -1,17 +1,17 @@
 
-"""Research Agent with MCP Integration.
+"""MCP 통합 Research Agent.
 
-This module implements a research agent that integrates with Model Context Protocol (MCP)
-servers to access tools and resources. The agent demonstrates how to use MCP filesystem
-server for local document research and analysis.
+이 모듈은 Model Context Protocol (MCP) server와 통합하여 tool과 resource에 접근하는
+research agent를 구현합니다. Agent는 로컬 문서 연구 및 분석을 위해 MCP filesystem
+server를 사용하는 방법을 보여줍니다.
 
-Key features:
-- MCP server integration for tool access
-- Async operations for concurrent tool execution (required by MCP protocol)
-- Filesystem operations for local document research
-- Secure directory access with permission checking
-- Research compression for efficient processing
-- Lazy MCP client initialization for LangGraph Platform compatibility
+주요 기능:
+- Tool 접근을 위한 MCP server 통합
+- 동시 tool 실행을 위한 비동기 작업 (MCP protocol에서 필수)
+- 로컬 문서 연구를 위한 Filesystem 작업
+- 권한 검사를 통한 안전한 디렉터리 접근
+- 효율적인 처리를 위한 연구 압축
+- LangGraph Platform 호환성을 위한 지연 MCP client 초기화
 """
 
 import os
@@ -27,58 +27,58 @@ from deep_research_from_scratch.prompts import research_agent_prompt_with_mcp, c
 from deep_research_from_scratch.state_research import ResearcherState, ResearcherOutputState
 from deep_research_from_scratch.utils import get_today_str, think_tool, get_current_dir
 
-# ===== CONFIGURATION =====
+# ===== 설정 =====
 
-# MCP server configuration for filesystem access
+# Filesystem 접근을 위한 MCP server 설정
 mcp_config = {
     "filesystem": {
         "command": "npx",
         "args": [
-            "-y",  # Auto-install if needed
+            "-y",  # 필요시 자동 설치
             "@modelcontextprotocol/server-filesystem",
-            str(get_current_dir() / "files")  # Path to research documents
+            str(get_current_dir() / "files")  # 연구 문서 경로
         ],
-        "transport": "stdio"  # Communication via stdin/stdout
+        "transport": "stdio"  # stdin/stdout을 통한 통신
     }
 }
 
-# Global client variable - will be initialized lazily
+# 전역 client 변수 - 지연 초기화됨
 _client = None
 
 def get_mcp_client():
-    """Get or initialize MCP client lazily to avoid issues with LangGraph Platform."""
+    """LangGraph Platform 문제를 방지하기 위해 MCP client를 지연 초기화하여 반환."""
     global _client
     if _client is None:
         _client = MultiServerMCPClient(mcp_config)
     return _client
 
-# Initialize models
+# Model 초기화
 compress_model = init_chat_model(model="openai:gpt-4.1", max_tokens=32000)
 model = init_chat_model(model="anthropic:claude-sonnet-4-20250514")
 
-# ===== AGENT NODES =====
+# ===== AGENT NODE =====
 
 async def llm_call(state: ResearcherState):
-    """Analyze current state and decide on tool usage with MCP integration.
+    """MCP 통합을 통해 현재 state를 분석하고 tool 사용을 결정.
 
-    This node:
-    1. Retrieves available tools from MCP server
-    2. Binds tools to the language model
-    3. Processes user input and decides on tool usage
+    이 node는:
+    1. MCP server에서 사용 가능한 tool을 검색
+    2. Tool을 language model에 바인딩
+    3. 사용자 입력을 처리하고 tool 사용을 결정
 
-    Returns updated state with model response.
+    Model 응답으로 업데이트된 state를 반환.
     """
-    # Get available tools from MCP server
+    # MCP server에서 사용 가능한 tool 가져오기
     client = get_mcp_client()
     mcp_tools = await client.get_tools()
 
-    # Use MCP tools for local document access
+    # 로컬 문서 접근을 위한 MCP tool 사용
     tools = mcp_tools + [think_tool]
 
-    # Initialize model with tool binding
+    # Tool 바인딩으로 model 초기화
     model_with_tools = model.bind_tools(tools)
 
-    # Process user input with system prompt
+    # System prompt로 사용자 입력 처리
     return {
         "researcher_messages": [
             model_with_tools.invoke(
@@ -88,39 +88,39 @@ async def llm_call(state: ResearcherState):
     }
 
 async def tool_node(state: ResearcherState):
-    """Execute tool calls using MCP tools.
+    """MCP tool을 사용하여 tool 호출 실행.
 
-    This node:
-    1. Retrieves current tool calls from the last message
-    2. Executes all tool calls using async operations (required for MCP)
-    3. Returns formatted tool results
+    이 node는:
+    1. 마지막 메시지에서 현재 tool 호출을 검색
+    2. 비동기 작업을 사용하여 모든 tool 호출 실행 (MCP에 필수)
+    3. 형식화된 tool 결과 반환
 
-    Note: MCP requires async operations due to inter-process communication
-    with the MCP server subprocess. This is unavoidable.
+    참고: MCP는 MCP server subprocess와의 프로세스 간 통신으로 인해
+    비동기 작업이 필요합니다. 이는 불가피합니다.
     """
     tool_calls = state["researcher_messages"][-1].tool_calls
 
     async def execute_tools():
-        """Execute all tool calls. MCP tools require async execution."""
-        # Get fresh tool references from MCP server
+        """모든 tool 호출을 실행. MCP tool은 비동기 실행이 필요."""
+        # MCP server에서 새로운 tool 참조 가져오기
         client = get_mcp_client()
         mcp_tools = await client.get_tools()
         tools = mcp_tools + [think_tool]
         tools_by_name = {tool.name: tool for tool in tools}
 
-        # Execute tool calls (sequentially for reliability)
+        # Tool 호출 실행 (안정성을 위해 순차적으로)
         observations = []
         for tool_call in tool_calls:
             tool = tools_by_name[tool_call["name"]]
             if tool_call["name"] == "think_tool":
-                # think_tool is sync, use regular invoke
+                # think_tool은 동기식, 일반 invoke 사용
                 observation = tool.invoke(tool_call["args"])
             else:
-                # MCP tools are async, use ainvoke
+                # MCP tool은 비동기식, ainvoke 사용
                 observation = await tool.ainvoke(tool_call["args"])
             observations.append(observation)
 
-        # Format results as tool messages
+        # 결과를 tool 메시지로 형식화
         tool_outputs = [
             ToolMessage(
                 content=observation,
@@ -137,13 +137,13 @@ async def tool_node(state: ResearcherState):
     return {"researcher_messages": messages}
 
 def compress_research(state: ResearcherState) -> dict:
-    """Compress research findings into a concise summary.
+    """연구 결과를 간결한 요약으로 압축.
 
-    Takes all the research messages and tool outputs and creates
-    a compressed summary suitable for further processing or reporting.
+    모든 연구 메시지와 tool 출력을 가져와서 추가 처리나 보고에
+    적합한 압축된 요약을 생성합니다.
 
-    This function filters out think_tool calls and focuses on substantive
-    file-based research content from MCP tools.
+    이 함수는 think_tool 호출을 필터링하고 MCP tool의 실질적인
+    파일 기반 연구 콘텐츠에 중점을 둡니다.
     """
 
     system_message = compress_research_system_prompt.format(date=get_today_str())
@@ -151,10 +151,10 @@ def compress_research(state: ResearcherState) -> dict:
 
     response = compress_model.invoke(messages)
 
-    # Extract raw notes from tool and AI messages
+    # Tool 및 AI 메시지에서 원시 노트 추출
     raw_notes = [
         str(m.content) for m in filter_messages(
-            state["researcher_messages"], 
+            state["researcher_messages"],
             include_types=["tool", "ai"]
         )
     ]
@@ -164,45 +164,45 @@ def compress_research(state: ResearcherState) -> dict:
         "raw_notes": ["\n".join(raw_notes)]
     }
 
-# ===== ROUTING LOGIC =====
+# ===== 라우팅 로직 =====
 
 def should_continue(state: ResearcherState) -> Literal["tool_node", "compress_research"]:
-    """Determine whether to continue with tool execution or compress research.
+    """Tool 실행을 계속할지 연구를 압축할지 결정.
 
-    Determines whether to continue with tool execution or compress research
-    based on whether the LLM made tool calls.
+    LLM이 tool을 호출했는지 여부에 따라 tool 실행을 계속할지
+    연구를 압축할지 결정합니다.
     """
     messages = state["researcher_messages"]
     last_message = messages[-1]
 
-    # Continue to tool execution if tools were called
+    # Tool이 호출되었으면 tool 실행 계속
     if last_message.tool_calls:
         return "tool_node"
-    # Otherwise, compress research findings
+    # 그렇지 않으면 연구 결과 압축
     return "compress_research"
 
-# ===== GRAPH CONSTRUCTION =====
+# ===== GRAPH 구성 =====
 
-# Build the agent workflow
+# Agent workflow 구축
 agent_builder_mcp = StateGraph(ResearcherState, output_schema=ResearcherOutputState)
 
-# Add nodes to the graph
+# Graph에 node 추가
 agent_builder_mcp.add_node("llm_call", llm_call)
 agent_builder_mcp.add_node("tool_node", tool_node)
 agent_builder_mcp.add_node("compress_research", compress_research)
 
-# Add edges to connect nodes
+# Node를 연결하는 edge 추가
 agent_builder_mcp.add_edge(START, "llm_call")
 agent_builder_mcp.add_conditional_edges(
     "llm_call",
     should_continue,
     {
-        "tool_node": "tool_node",        # Continue to tool execution
-        "compress_research": "compress_research",  # Compress research findings
+        "tool_node": "tool_node",        # Tool 실행 계속
+        "compress_research": "compress_research",  # 연구 결과 압축
     },
 )
-agent_builder_mcp.add_edge("tool_node", "llm_call")  # Loop back for more processing
+agent_builder_mcp.add_edge("tool_node", "llm_call")  # 추가 처리를 위해 다시 루프
 agent_builder_mcp.add_edge("compress_research", END)
 
-# Compile the agent
+# Agent 컴파일
 agent_mcp = agent_builder_mcp.compile()

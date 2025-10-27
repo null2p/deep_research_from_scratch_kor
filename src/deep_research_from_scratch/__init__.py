@@ -1,1 +1,1 @@
-"""Deep Research From Scratch - Tutorial implementation."""
+"""Deep Research From Scratch - 튜토리얼 구현."""
